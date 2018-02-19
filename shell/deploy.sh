@@ -16,7 +16,7 @@ source "$DIR/config_deploy.sh";
 
 ###################=-= END OF CUSTOM CONFIGURATION =-=###############################
 
-MS_JAR=$PROJ_NAME_backend-0.0.1_${PORT}-SNAPSHOT.jar 
+MS_JAR="$PROJ_NAME"_backend-0.0.1_"${PORT}"-SNAPSHOT.jar
 
 # Where micro service war/jar file sits?
 MS_HOME=/build/libs 
@@ -58,19 +58,21 @@ run_as() {
 build_frontend() {
 	cd $FRONTEND_DIR;
 	run_as ${RUNASUSER} npm install;
-	ENV_URL=
-	[[ ! -z $API_URL ]] && ENV_URL="env API_URL=${API_URL}"
+	#[[ ! -z $API_URL ]] && ENV_URL="env API_URL=${API_URL}"
 	run_as ${RUNASUSER} ${ENV_URL} npm run build;
 	echo "###########    the task build_frontend completed successfully, API_URL=${API_URL}     ########";
 }
 
 #build mobile application, should come between build_frontend and build_backend
 build_mobile_app() {
-	cd $FRONTEND_DIR;
-	run_as ${RUNASUSER} cordova platform add android;
+	cd $FRONTEND_DIR/cordova;
+	run_as ${RUNASUSER} cordova prepare;
+	local _LINE="url:\"$SERVER_URL\","  
+	replace_line_in_file 3 $_LINE "./www/js/url_config.js";
+
 	run_as ${RUNASUSER} env ANDROID_HOME=${ANDROID_HOME} cordova build android --release -- --keystore=${ANDROID_KEYSTORE} --storePassword=${ANDROID_PASSWORD} --alias=${PROJ_NAME}_key --password=${ANDROID_PASSWORD};
 	#now lets copy the file to the server:
-	cp ./platforms/android/build/outputs/apk/android-release.apk $BACKEND_DIR/src/main/resources/public/android-release.apk
+	cp ./platforms/android/build/outputs/apk/release/android-release.apk $BACKEND_DIR/src/main/resources/public/android-release.apk
 	echo "##########    apk copied and can be found at: http://<ip>:<port>/android-release.apk 		########"
 	echo "###########    the task build_mobile_app completed successfully, ANDROID_HOME=${ANDROID_HOME}     ########";
 }
@@ -78,8 +80,8 @@ build_mobile_app() {
 db_backup() {
 
 	date=$(date +"%Y-%m-%d_%H")
-	MYSQLDUMP=$(which mysqldump)
-	FOLDER_PATH=$BACKEND_DIR/db_backup_prod
+	local _MYSQLDUMP=$(which mysqldump)
+	local _FOLDER_PATH=$BACKEND_DIR/db_backup_prod
 
 	if [[ ! $1 ]]; then {
 		echo "Nothing was done due to missing parameter"
@@ -89,37 +91,37 @@ db_backup() {
 	echo "Doing a db backup: $1";
 
 	if [ "$1" = "daily" ]; then {
-		FILE_BACKUP=$FOLDER_PATH/_daily_backup.sql
+		local _FILE_BACKUP=$_FOLDER_PATH/_daily_backup.sql
 	} 
 	elif [ "$1" = "weekly" ]; then {
-		FILE_BACKUP=$FOLDER_PATH/$date.sql
+		local _FILE_BACKUP=$_FOLDER_PATH/$date.sql
 	}
 	else {
 		echo "you can only use daily and weekly as first argument"
 		exit 0;
 	} fi
-	"$MYSQLDUMP" -u$DB_USER -p$DB_PASS $DB_NAME > $FILE_BACKUP
-	echo "File writen to $FILE_BACKUP";
+	"$_MYSQLDUMP" -u$DB_USER -p$DB_PASS $DB_NAME > $_FILE_BACKUP
+	echo "File writen to $_FILE_BACKUP";
 }
 
 
 db_restore() {
 
-	MYSQL=$(which mysql)
-	FOLDER_PATH=$BACKEND_DIR/db_backup_prod
+	local _MYSQL=$(which mysql)
+	local _FOLDER_PATH=$BACKEND_DIR/db_backup_prod
 
 	read -p "Are you sure you want to restore db? [ y/n ]" -n 1 -r
 	echo    # (optional) move to a new line
 	if [[ $REPLY =~ ^[Yy]$ ]]; then {
 		read -p "What is the name of database?"
-		DB_NAME_RESTORE=$REPLY
+		local _DB_NAME_RESTORE=$REPLY
 		read -p "What is the name of file (will look in to db_backup_production?"
-		DB_FILE_RESTORE=$FOLDER_PATH/$REPLY
+		local _DB_FILE_RESTORE=$_FOLDER_PATH/$REPLY
 		#this should not be automated, we will ask for password..
-		COMMAND='"$MYSQL" -uroot -p $DB_NAME_RESTORE < $DB_FILE_RESTORE'
-		echo "command: $COMMAND"
+		_COMMAND='"$_MYSQL" -uroot -p $_DB_NAME_RESTORE < $_DB_FILE_RESTORE'
+		echo "command: $_COMMAND"
 		echo "Restoring db...:"
-		eval $COMMAND
+		eval $_COMMAND
 		echo "Restoration done.."
 	} fi
 }
@@ -212,7 +214,10 @@ stop() {
 
 }
 set_deploy_date() {
-	echo "export const deployDate = \"${DATE}\"; " > ${FRONTEND_DIR}/src/services/deployDate.js
+	local _FILE=${FRONTEND_DIR}/src/services/deployDate.js
+	#in case file does not exist create:
+	touch $_FILE 
+	echo "export const deployDate = \"${DATE}\"; " > $_FILE
 }
 
 pull() {
@@ -229,13 +234,22 @@ pull() {
 
 update_version() {
 	#will update version number in file below..
-	file=$BACKEND_DIR/config/application.properties
-	line_number=2
-	line="`sed -n ${line_number}p $file`"
-	v_number=${line//[!0-9]/}
-	v_number=$((v_number+1))
-	sed -i "${line_number}s/.*/${PROJ_NAME}.build-version=v$v_number/" $file
-	echo "build numer updated, number: $v_number"
+	local _FILE=$BACKEND_DIR/config/application.properties
+	local _LINE_NUMBER=2;
+	local _LINE="`sed -n ${_LINE_NUMBER}p $_FILE`"
+	local _V_NUMBER=${_LINE//[!0-9]/}
+	_V_NUMBER=$((_V_NUMBER+1))
+	replace_line_in_file $_LINE_NUMBER "${PROJ_NAME}.build-version=v$_V_NUMBER" $_FILE
+	echo "build numer updated, number: $_V_NUMBER"
+}
+
+#will replace the line with the new line in sepcified file
+#NOTE: the new line can not have spaces!!
+replace_line_in_file() {
+	local _LINE_NUMBER=$1;
+	local _NEW_LINE=$2;
+	file=$3;
+	sed -i "${_LINE_NUMBER}s|.*|$_NEW_LINE|" $file
 }
 
 create_dir() {
@@ -256,12 +270,12 @@ status() {
 
 test() {
     echo "Testing..";
-    WORK_DIR=$(pwd)
-    cd ${BACKEND_DIR}
+    local _WORK_DIR=$(pwd)
+    cd ${_BACKEND_DIR}
     #ADD yout test scipt here: 
 
     echo "...."
-    cd ${WORK_DIR}
+    cd ${_WORK_DIR}
 }
 
 restart() {

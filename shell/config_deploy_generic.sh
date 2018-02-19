@@ -5,16 +5,16 @@ PROJ_NAME=vala
 
 # if port number for spring boot is < 1024 it needs root perm.
 PORT=8080 
-RUNASUSER=<user_name> 
+RUNASUSER=user_name 
 
 ###########################################
 #optional for Android app and jenkins:
-API_URL=http://<ip>:${PORT}/api/v1
+SERVER_URL=http://hostname:${PORT}
 JENKINS_DIR=~/jenkins
 PROJ_GIT_URL=git@github....
 
 ANDROID_KEYSTORE=~/keystores/android.jks
-ANDROID_PASSWORD=<password>
+ANDROID_PASSWORD=password
 ANDROID_HOME=~/.android-sdk
 ###########################################################
 
@@ -28,9 +28,9 @@ OPTIONS="-Xms256m -Xmx3g ${OPTIONS}"
 #OPTIONS="-Dspring.profiles.active=dev ${OPTIONS}"
 
 #needed in case you would like to take backup of the db 
-DB_NAME=<db_name>;
-DB_USER=<db_user>;
-DB_PASS=<db_pass>;
+DB_NAME=db_name;
+DB_USER=db_user;
+DB_PASS=db_pass;
 
 #set java if not set on system or to use custom java
 #JAVA_HOME=/usr/local/jdk1.8.0_60; 
