@@ -25,7 +25,7 @@ SENTRY_DSN=https://<key>
 OPTIONS="";
 OPTIONS="-Dsentry.dsn=$SENTRY_DSN ${OPTIONS}";
 OPTIONS="-Xms256m -Xmx3g ${OPTIONS}"
-#OPTIONS="-Dspring.profiles.active=dev ${OPTIONS}"
+OPTIONS="-Dspring.profiles.active=production ${OPTIONS}"
 
 #needed in case you would like to take backup of the db 
 DB_NAME=db_name;
