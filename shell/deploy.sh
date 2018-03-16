@@ -232,6 +232,19 @@ pull() {
 	echo "git pull done"
 }
 
+#if new commits in remote repo we will redeploy..
+git_check_status_and_redeploy() {
+	cd $PROJ_DIR
+	echo "Doing git fetch.."
+	run_as ${RUNASUSER} git fetch;
+	if [ $(git rev-parse HEAD) != $(git rev-parse @{u}) ]; then {
+		echo "There are updates on servier, doing git pull"
+		run_as ${RUNASUSER} git pull;
+		echo "Will do redeploy.."
+		restart;
+	} fi;
+}
+
 update_version() {
 	#will update version number in file below..
 	local _FILE=$BACKEND_DIR/config/application.properties
@@ -341,6 +354,9 @@ generate_dummy, build_mobile_app";
 		;;
 	build_mobile_app)
 		build_mobile_app;
+		;;
+	git_check_status_and_redeploy)
+		git_check_status_and_redeploy;
 		;;
 esac
 
