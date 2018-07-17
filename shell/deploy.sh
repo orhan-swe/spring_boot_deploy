@@ -1,4 +1,11 @@
 #!/bin/bash -
+
+# stop exit script with apprioriate exit code as soon as an error occurs
+set -o errexit
+
+# echo commands to output
+#set -o xtrace
+
 # Any subsequent(*) commands which fail will cause the shell script to exit immediately
 #set -e
 
@@ -12,7 +19,7 @@ DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 source "$DIR/config_deploy.sh";
 
 #Config will give these variables: 
-#echo "$PORT, $RUNASUSER, $PROJ_DIR, $PROJ_NAME, $OPTIONS, $DB_NAME, $DB_USER, $DB_PASS"
+#echo "$PORT, $RUNASUSER, $PROJ_DIR, $PROJ_NAME, $OPTIONS, $DB_NAME, $DB_USER, $DB_PASS, $DB_GENERATOR_FILE"
 
 ###################=-= END OF CUSTOM CONFIGURATION =-=###############################
 
@@ -57,6 +64,7 @@ run_as() {
 #build frontend part of application
 build_frontend() {
 	cd $FRONTEND_DIR;
+	#run_as ${RUNASUSER} npm install --production;
 	run_as ${RUNASUSER} npm install;
 	#[[ ! -z $API_URL ]] && ENV_URL="env API_URL=${API_URL}"
 	run_as ${RUNASUSER} ${ENV_URL} npm run build;
@@ -126,7 +134,6 @@ db_restore() {
 	} fi
 }
 
-
 # Function: start instance (will not rebuild nor restart)
 start() {
 	pid=${MS_PID}
@@ -143,17 +150,24 @@ start() {
 		#if jenkins is runnin we will not tail
 		echo "###########    WE ARE TAILING, YOU CAN PRESS CTRL-C TO STOP TAIL, IT WILL NOT STOP THE APPLICATION ########"
 		#wait for a hafl of sec for process to start
-		sleep .5
-		#we will tail for 90 sec then tail will be killed (needed for jenkins)
-		timeout --foreground 90s tail -f screenlog.0;
+		sleep 1 
+		set -o xtrace # this is needed so tial works below
+		tail -f screenlog.0 | while read LOGLINE
+		do
+			[[ "${LOGLINE}" == *"JVM running for"* ]] && pkill -P $$ tail
+			if [[ "${LOGLINE}" == *" Error"* ]]; then {
+            	pkill -P $$ tail;
+            	exit 1;
+            } fi
+		done
 	} fi;
 	# return 0;
 }
 
-generate_dummy() {
+db_seed() {
 	cd ${BACKEND_DIR}
 	#--tests specify the file to run, --rerun-tasks rerun test even when no code change..
-	run_as ${RUNASUSER} ./gradlew test --tests --rerun-tasks integration.dbGenerator.init.Main ${UTF_OPTION}
+	run_as ${RUNASUSER} ./gradlew test --tests --rerun-tasks ${DB_SEEDER} ${UTF_OPTION}
 }
 
 build_backend() {
@@ -178,7 +192,7 @@ stop() {
 		while kill -0 ${pid} 2>/dev/null && [ ${count} -le ${kwait} ]; do {
 			printf ".";
 			sleep 1;
-			(( count++ ));
+			count=$((count+1));
 		} done;
 
 		echo;
@@ -224,7 +238,7 @@ pull() {
 	#clone/pull the prject
 	if [ -d ${PROJ_DIR} ]; then {
 	    echo "Starting git pull $PROJ_GIT_URL"
-	    run_as ${RUNASUSER} cd ${PROJ_DIR} && yes | run_as ${RUNASUSER} git pull ${PROJ_GIT_URL};
+	    run_as ${RUNASUSER} cd ${PROJ_DIR} && yes | run_as ${RUNASUSER} git pull;
 	} else {
 	    echo "Starting git clone $PROJ_GIT_URL ${PROJ_DIR}"
 	    yes | run_as ${RUNASUSER} git clone ${PROJ_GIT_URL} ${PROJ_DIR} && run_as ${RUNASUSER} cd ${PROJ_DIR};
@@ -305,7 +319,7 @@ case $1 in
 		echo "options: 
 start, build_backend, build_frontend, stop, restart, restart_backend, status, 
 set_deploy_date, pull, auto_deploy, db_backup, db_restore, 
-generate_dummy, build_mobile_app";
+db_seed_reset_all, db_seed_update_values, build_mobile_app";
 		;;
 	set_deploy_date)
 		set_deploy_date;
@@ -346,8 +360,8 @@ generate_dummy, build_mobile_app";
 	auto_deploy)
 		auto_deploy;
 		;;
-	generate_dummy)
-		generate_dummy;
+	db_seed)
+		db_seed;
 		;;
 	update_version)
 		update_version;

@@ -1,5 +1,11 @@
 #!/bin/bash -
 
+# stop exit script with apprioriate exit code as soon as an error occurs
+set -o errexit
+
+# echo commands to output
+#set -o xtrace
+
 PROJ_DIR=~/vala
 PROJ_NAME=vala 
 
@@ -20,6 +26,9 @@ ANDROID_HOME=~/.android-sdk
 
 #update to production key:
 SENTRY_DSN=https://<key>
+
+#generate dummy date in the db, file to run:
+DB_SEEDER=integration.dbGenerator.main.RunDbSeeder
 
 #add JAVA VM options
 OPTIONS="";
