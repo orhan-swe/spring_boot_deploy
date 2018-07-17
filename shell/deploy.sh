@@ -66,9 +66,10 @@ build_frontend() {
 	cd $FRONTEND_DIR;
 	#run_as ${RUNASUSER} npm install --production;
 	run_as ${RUNASUSER} npm install;
-	#[[ ! -z $API_URL ]] && ENV_URL="env API_URL=${API_URL}"
-	run_as ${RUNASUSER} ${ENV_URL} npm run build;
-	echo "###########    the task build_frontend completed successfully, API_URL=${API_URL}     ########";
+	#you can pass an env variable to the frontend if needed:
+	#[[ ! -z $ENV_VAR ]] && ENV_VAR="env ENV_VAR=${ENV_VAR}"
+	run_as ${RUNASUSER} ${ENV_VAR} npm run build;
+	echo "###########    the task build_frontend completed successfully     ########";
 }
 
 #build mobile application, should come between build_frontend and build_backend
@@ -81,7 +82,7 @@ build_mobile_app() {
 	run_as ${RUNASUSER} env ANDROID_HOME=${ANDROID_HOME} cordova build android --release -- --keystore=${ANDROID_KEYSTORE} --storePassword=${ANDROID_PASSWORD} --alias=${PROJ_NAME}_key --password=${ANDROID_PASSWORD};
 	#now lets copy the file to the server:
 	cp ./platforms/android/build/outputs/apk/release/android-release.apk $BACKEND_DIR/src/main/resources/public/android-release.apk
-	echo "##########    apk copied and can be found at: http://<ip>:<port>/android-release.apk 		########"
+	echo "##########    apk copied and can be found at: ${SERVER_URL}/android-release.apk 		########"
 	echo "###########    the task build_mobile_app completed successfully, ANDROID_HOME=${ANDROID_HOME}     ########";
 }
 
