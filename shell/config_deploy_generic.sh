@@ -6,12 +6,13 @@ set -o errexit
 # echo commands to output
 #set -o xtrace
 
-PROJ_DIR=~/vala
-PROJ_NAME=vala 
+PROJ_DIR=~/proj_dir
+PROJ_NAME=proj_name
+BRANCH_NAME=master
 
 # if port number for spring boot is < 1024 it needs root perm.
-PORT=8080 
-RUNASUSER=user_name 
+PORT=8080
+RUNASUSER=user_name
 
 ###########################################
 #optional for Android app and jenkins:
@@ -31,18 +32,20 @@ SENTRY_DSN=https://<key>
 DB_SEEDER=integration.dbGenerator.main.RunDbSeeder
 
 #add JAVA VM options
+PROFILE=production
 OPTIONS="";
 OPTIONS="-Dsentry.dsn=$SENTRY_DSN ${OPTIONS}";
+OPTIONS="-Dsentry.environment=${profile} ${OPTIONS}";
 OPTIONS="-Xms256m -Xmx3g ${OPTIONS}"
-OPTIONS="-Dspring.profiles.active=production ${OPTIONS}"
+OPTIONS="-Dspring.profiles.active=${PROFILE} ${OPTIONS}"
 
-#needed in case you would like to take backup of the db 
+#needed in case you would like to take backup of the db
 DB_NAME=db_name;
 DB_USER=db_user;
 DB_PASS=db_pass;
 
 #set java if not set on system or to use custom java
-#JAVA_HOME=/usr/local/jdk1.8.0_60; 
+#JAVA_HOME=/usr/local/jdk1.8.0_60;
 #PATH=${JAVA_HOME}/bin:${PATH};
 #export PATH JAVA_HOME
 
