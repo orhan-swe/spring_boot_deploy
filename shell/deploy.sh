@@ -99,8 +99,11 @@ run_as() {
 #build frontend part of application
 build_frontend() {
         set_deploy_date ${FRONTEND_DIR}/src/services/deployDate.js
-        update_version
         cd $FRONTEND_DIR;
+        npm_install;
+}
+
+npm_install() {
         #run_as ${RUNASUSER} npm install --production;
         run_as ${RUNASUSER} npm install;
         #you can pass an env variable to the frontend if needed:
@@ -109,9 +112,12 @@ build_frontend() {
         echo "###########    the task build_frontend completed successfully     ########";
 }
 
+
 #build mobile application, should come between build_frontend and build_backend
 build_mobile_app_android() {
         set_deploy_date ${FRONTEND_DIR_MOBILE}/src/services/deployDate.js
+        cd $FRONTEND_DIR_MOBILE;
+        npm_install;
         cd $FRONTEND_DIR_MOBILE/cordova;
         run_as ${RUNASUSER} cordova prepare;
         local _LINE="url:\"$SERVER_URL/android/index.html\","
@@ -119,7 +125,7 @@ build_mobile_app_android() {
 
         run_as ${RUNASUSER} env ANDROID_HOME=${ANDROID_HOME} cordova build android --release -- --keystore=${ANDROID_KEYSTORE} --storePassword=${ANDROID_PASSWORD} --alias=vala_key --password=${ANDROID_PASSWORD};
         #now lets copy the file to the server:
-        cp ./platforms/android/build/outputs/apk/release/android-release.apk $BACKEND_DIR/src/main/resources/public/android/android-release.apk
+        cp ./platforms/android/build/outputs/apk/release/android-release.apk $BACKEND_DIR/src/main/resources/public/android-release.apk
         echo "##########    apk copied and can be found at: ${SERVER_URL}/android/android-release.apk           ########"
         echo "###########    the task build_mobile_app_android completed successfully, ANDROID_HOME=${ANDROID_HOME}     ########";
 }

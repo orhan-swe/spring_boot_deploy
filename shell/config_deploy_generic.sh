@@ -57,7 +57,6 @@ config_deploy_restart() {
 	#db_backup_production;
 	stop;
 	#pull;
-	#set_deploy_date;
 	#update_version;
 	#build_frontend;
 	#build_mobile_app_android;
