@@ -115,7 +115,7 @@ build_mobile_app_android() {
         local _LINE="url:\"$SERVER_URL/android/index.html\","
         replace_line_in_file 3 $_LINE "./www/js/url_config.js";
 
-        run_as ${RUNASUSER} env ANDROID_HOME=${ANDROID_HOME} cordova build android --release -- --keystore=${ANDROID_KEYSTORE} --storePassword=${ANDROID_PASSWORD} --alias=${PROJ_NAME}_key --password=${ANDROID_PASSWORD};
+        run_as ${RUNASUSER} env ANDROID_HOME=${ANDROID_HOME} cordova build android --release -- --keystore=${ANDROID_KEYSTORE} --storePassword=${ANDROID_PASSWORD} --alias=vala_key --password=${ANDROID_PASSWORD};
         #now lets copy the file to the server:
         cp ./platforms/android/build/outputs/apk/release/android-release.apk $BACKEND_DIR/src/main/resources/public/android/android-release.apk
         echo "##########    apk copied and can be found at: ${SERVER_URL}/android/android-release.apk           ########"
