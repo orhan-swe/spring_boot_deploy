@@ -98,6 +98,7 @@ run_as() {
 
 #build frontend part of application
 build_frontend() {
+        set_deploy_date ${FRONTEND_DIR}/src/services/deployDate.js
         update_version
         cd $FRONTEND_DIR;
         #run_as ${RUNASUSER} npm install --production;
@@ -110,6 +111,7 @@ build_frontend() {
 
 #build mobile application, should come between build_frontend and build_backend
 build_mobile_app_android() {
+        set_deploy_date ${FRONTEND_DIR_MOBILE}/src/services/deployDate.js
         cd $FRONTEND_DIR_MOBILE/cordova;
         run_as ${RUNASUSER} cordova prepare;
         local _LINE="url:\"$SERVER_URL/android/index.html\","
@@ -261,17 +263,16 @@ build_backend() {
 
 
 set_deploy_date() {
-        local _FILE=${FRONTEND_DIR}/src/services/deployDate.js
         #in case file does not exist create:
-        touch $_FILE
-        echo "export const deployDate = \"${DATE}\"; " > $_FILE
+        touch $1
+        echo "export const deployDate = \"${DATE}\"; " > $1
 }
 
 
 pull() {
         #clone/pull the prject
         if [ -d ${PROJ_DIR} ]; then {
-            echo "Starting git pull $PROJ_GIT_URL"
+            echo "Starting git pull"
             run_as ${RUNASUSER} cd ${PROJ_DIR} && yes | run_as ${RUNASUSER} git pull origin ${BRANCH_NAME};
         } else {
             echo "Starting git clone $PROJ_GIT_URL ${PROJ_DIR}"
@@ -363,13 +364,12 @@ set_deploy_date, pull, auto_deploy, db_backup, db_restore,
 db_seed_reset_all, db_seed_update_values, build_mobile_app_android";
                 ;;
         set_deploy_date)
-                set_deploy_date;
+                set_deploy_date $1;
                 ;;
         start)
                 start;
                 ;;
         build_frontend)
-                set_deploy_date;
                 build_frontend;
                 ;;
         build_backend)

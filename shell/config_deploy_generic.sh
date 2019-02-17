@@ -18,6 +18,7 @@ RUNASUSER=user_name
 #optional for Android app and jenkins:
 SERVER_URL=http://hostname:${PORT}
 JENKINS_DIR=~/jenkins
+#used only for first clone if needed..
 PROJ_GIT_URL=git@github....
 
 ANDROID_KEYSTORE=~/keystores/android.jks
