@@ -59,7 +59,7 @@ config_deploy_restart() {
 	#set_deploy_date;
 	#update_version;
 	#build_frontend;
-	#build_mobile_app;
+	#build_mobile_app_android;
 	#build_backend;
 	start;
 }

@@ -38,7 +38,7 @@ UTF_OPTION="-Dfile.encoding=UTF-8"
 OPTIONS="${UTF_OPTION} -Dserver.port=${PORT} ${OPTIONS}"
 
 FRONTEND_DIR=${PROJ_DIR}/${PROJ_NAME}_frontend
-FRONTEND_DIR_MOBLE=${PROJ_DIR}/${PROJ_NAME}_mobile
+FRONTEND_DIR_MOBILE=${PROJ_DIR}/${PROJ_NAME}_mobile
 BACKEND_DIR=${PROJ_DIR}/${PROJ_NAME}_backend
 SCRIPT_DIR=${BACKEND_DIR}/script/shell
 VERSION_UPDATED=false
@@ -109,17 +109,17 @@ build_frontend() {
 }
 
 #build mobile application, should come between build_frontend and build_backend
-build_mobile_app() {
+build_mobile_app_android() {
         cd $FRONTEND_DIR_MOBILE/cordova;
         run_as ${RUNASUSER} cordova prepare;
-        local _LINE="url:\"$SERVER_URL\","
+        local _LINE="url:\"$SERVER_URL/android/index.html\","
         replace_line_in_file 3 $_LINE "./www/js/url_config.js";
 
         run_as ${RUNASUSER} env ANDROID_HOME=${ANDROID_HOME} cordova build android --release -- --keystore=${ANDROID_KEYSTORE} --storePassword=${ANDROID_PASSWORD} --alias=${PROJ_NAME}_key --password=${ANDROID_PASSWORD};
         #now lets copy the file to the server:
-        cp ./platforms/android/build/outputs/apk/release/android-release.apk $BACKEND_DIR/src/main/resources/public/android-release.apk
-        echo "##########    apk copied and can be found at: ${SERVER_URL}/android-release.apk           ########"
-        echo "###########    the task build_mobile_app completed successfully, ANDROID_HOME=${ANDROID_HOME}     ########";
+        cp ./platforms/android/build/outputs/apk/release/android-release.apk $BACKEND_DIR/src/main/resources/public/android/android-release.apk
+        echo "##########    apk copied and can be found at: ${SERVER_URL}/android/android-release.apk           ########"
+        echo "###########    the task build_mobile_app_android completed successfully, ANDROID_HOME=${ANDROID_HOME}     ########";
 }
 
 db_backup() {
@@ -360,7 +360,7 @@ case $1 in
                 echo "options:
 start, build_backend, build_frontend, stop, restart, restart_backend, status,
 set_deploy_date, pull, auto_deploy, db_backup, db_restore,
-db_seed_reset_all, db_seed_update_values, build_mobile_app";
+db_seed_reset_all, db_seed_update_values, build_mobile_app_android";
                 ;;
         set_deploy_date)
                 set_deploy_date;
@@ -404,8 +404,8 @@ db_seed_reset_all, db_seed_update_values, build_mobile_app";
         db_seed)
                 db_seed;
                 ;;
-        build_mobile_app)
-                build_mobile_app;
+        build_mobile_app_android)
+                build_mobile_app_android;
                 ;;
         git_check_status_and_redeploy)
                 git_check_status_and_redeploy;
