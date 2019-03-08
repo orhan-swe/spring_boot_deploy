@@ -92,7 +92,7 @@ run_as() {
                 eval $*;
         }
         else {
-                /bin/su -p -s /bin/sh ${iwant} $*;
+                sudo su ${iwant} -s /bin/bash -c "$*";
         } fi;
 }
 
@@ -279,7 +279,8 @@ pull() {
         #clone/pull the prject
         if [ -d ${PROJ_DIR} ]; then {
             echo "Starting git pull"
-            run_as ${RUNASUSER} cd ${PROJ_DIR} && yes | run_as ${RUNASUSER} git pull origin ${BRANCH_NAME};
+            cd ${PROJ_DIR}
+            run_as ${RUNASUSER} git pull origin ${BRANCH_NAME};
         } else {
             echo "Starting git clone $PROJ_GIT_URL ${PROJ_DIR}"
             yes | run_as ${RUNASUSER} git clone ${PROJ_GIT_URL} ${PROJ_DIR} && run_as ${RUNASUSER} cd ${PROJ_DIR};
